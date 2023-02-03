@@ -6,16 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <androidx.camera.view.PreviewView
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <Button
         android:id="@+id/shootButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="30dp"
         android:backgroundTint="@android:color/system_neutral1_800"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         app:icon="@android:drawable/ic_menu_camera"
         app:iconTint="@color/white"
-        tools:layout_editor_absoluteX="345dp"
-        tools:layout_editor_absoluteY="665dp" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
