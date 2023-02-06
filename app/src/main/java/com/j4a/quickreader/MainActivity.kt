@@ -9,6 +9,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.CompletableFuture
 
+// test comment van Jonathan
+
 class MainActivity : AppCompatActivity() {
     private lateinit var cameraProviderFuture:ListenableFuture<ProcessCameraProvider>
     private lateinit var cameraSelector:CameraSelector
