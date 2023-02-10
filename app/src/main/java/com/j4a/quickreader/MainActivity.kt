@@ -1,17 +1,16 @@
 package com.j4a.quickreader
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import com.google.common.util.concurrent.ListenableFuture
-import java.util.concurrent.CompletableFuture
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var cameraProviderFuture:ListenableFuture<ProcessCameraProvider>
-    private lateinit var cameraSelector:CameraSelector
+    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+    private lateinit var cameraProvider: ProcessCameraProvider
+    private lateinit var cameraSelector: CameraSelector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
