@@ -71,7 +71,9 @@ class MainActivity : AppCompatActivity() {
         imageCapture.takePicture(
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {}
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    ImageBitReader(image).read()
+                }
             }
         )
     }
