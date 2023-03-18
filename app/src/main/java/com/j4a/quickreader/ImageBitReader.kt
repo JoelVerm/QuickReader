@@ -2,6 +2,7 @@ package com.j4a.quickreader
 
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.util.Log
 import androidx.camera.core.ImageProxy
 
 class ImageBitReader(private val image: ImageProxy) {
@@ -12,7 +13,7 @@ class ImageBitReader(private val image: ImageProxy) {
     fun readColors(): Array<Array<Int>> {
         val imageWidth = image.width
         val imageHeight = image.height
-        val imageArray = arrayOf<Array<Int>>()
+        val imageArray = Array(imageHeight) {Array(imageWidth) {0} }
 
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.capacity())
@@ -25,8 +26,8 @@ class ImageBitReader(private val image: ImageProxy) {
         var pixelCount = 0
 
         //Get average pixel color
-        for (y in 0..imageHeight) {
-            for (x in 0..imageWidth) {
+        for (y in 0 until imageHeight) {
+            for (x in 0 until imageWidth) {
                 val pixelColor = bitmap.getPixel(x, y)
                 totalRed += Color.red(pixelColor)
                 totalGreen += Color.green(pixelColor)
@@ -39,11 +40,11 @@ class ImageBitReader(private val image: ImageProxy) {
         val avgGreen = totalGreen / pixelCount
         val avgBlue = totalBlue / pixelCount
         val avgGray = (avgRed + avgGreen + avgBlue) / 3
-        print("$avgRed, $avgGreen, $avgBlue, $avgGray")
+        Log.d("Averages", "$avgRed, $avgGreen, $avgBlue, $avgGray")
 
         //Checking if color is black/white
-        for (y in 0..imageHeight) {
-            for (x in 0..imageWidth) {
+        for (y in 0 until imageHeight) {
+            for (x in 0 until imageWidth) {
                 val pixelColor = bitmap.getPixel(x, y)
                 val redValue = Color.red(pixelColor)
                 val greenValue = Color.green(pixelColor)

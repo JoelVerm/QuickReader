@@ -19,8 +19,6 @@ import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
 
 
-// test comment van Jonathan
-
 class MainActivity : AppCompatActivity() {
     private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
     private lateinit var cameraProvider: ProcessCameraProvider
@@ -31,15 +29,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (allPermissionsGranted())
+        if (allPermissionsGranted()) {
             startCamera()
-        else
+            val shootButton = findViewById<Button>(R.id.shootButton)
+            shootButton.setOnClickListener { takePhoto() }
+        } else
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
-
-        val shootButton = findViewById<Button>(R.id.shootButton)
-        shootButton.setOnClickListener { takePhoto() }
     }
 
     private fun startCamera() {
@@ -52,12 +49,14 @@ class MainActivity : AppCompatActivity() {
                 it.setSurfaceProvider(findViewById<PreviewView>(R.id.cameraPreview).surfaceProvider)
             }
 
+            imageCapture = ImageCapture.Builder().build()
+
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview
+                    this, cameraSelector, preview, imageCapture
                 )
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
