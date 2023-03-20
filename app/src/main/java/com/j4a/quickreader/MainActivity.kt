@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     ImageBitReader(image).read()
+                    image.close()
                 }
             }
         )
