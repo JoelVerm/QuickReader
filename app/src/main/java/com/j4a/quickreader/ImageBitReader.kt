@@ -10,10 +10,10 @@ class ImageBitReader(private val image: ImageProxy) {
         val pixelArray = readColors()
     }
 
-    fun readColors(): Array<Array<Int>> {
+    fun readColors(): Array<IntArray> {
         val imageWidth = image.width
         val imageHeight = image.height
-        val imageArray = Array(imageHeight) {Array(imageWidth) {0} }
+        val imageArray = Array(imageHeight) { IntArray(imageWidth) }
 
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.capacity())
