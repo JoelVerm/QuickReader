@@ -1,6 +1,7 @@
 package com.j4a.quickreader
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -39,7 +40,23 @@ class MainActivity : AppCompatActivity() {
             )
 
         val shootButton = findViewById<Button>(R.id.shootButton)
-        shootButton.setOnClickListener { takePhoto() }
+        shootButton.setOnClickListener {
+            takePhoto()
+            val intent = Intent(this, ReaderResult::class.java)
+            startActivity(intent)
+        }
+
+        val generatorbutton = findViewById<Button>(R.id.generatorbutton)
+        generatorbutton.setOnClickListener {
+            val intent = Intent(this, GenerateQr::class.java)
+            startActivity(intent)
+        }
+
+        val settingsbutton = findViewById<Button>(R.id.settingsbutton)
+        settingsbutton.setOnClickListener {
+            val intent = Intent(this, Settings::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun startCamera() {

@@ -5,14 +5,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 
-class GenerateResult : AppCompatActivity() {
+class Settings : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_generate_result)
+        setContentView(R.layout.activity_settings)
 
-        val returngenresbutton = findViewById<Button>(R.id.returngenresbutton)
-        returngenresbutton.setOnClickListener {
-            val intent = Intent(this, GenerateQr::class.java)
+        val returnsettingsbutton = findViewById<Button>(R.id.returnsettingbutton)
+        returnsettingsbutton.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
     }

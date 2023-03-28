@@ -52,11 +52,12 @@
         android:id="@+id/textView"
         android:layout_width="300dp"
         android:layout_height="300dp"
-        android:layout_marginBottom="360dp"
         android:text="Text result"
-        android:textSize="18dp"
         android:textAlignment="center"
+        android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        tools:layout_editor_absoluteX="55dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

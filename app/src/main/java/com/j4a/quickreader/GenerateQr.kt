@@ -10,13 +10,13 @@ class GenerateQr : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_generate_qr)
 
-        var returngenbutton = findViewById<Button>(R.id.returngenbutton)
+        val returngenbutton = findViewById<Button>(R.id.returngenbutton)
         returngenbutton.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
 
-        var generatebutton = findViewById<Button>(R.id.generatebutton)
+        val generatebutton = findViewById<Button>(R.id.generatebutton)
         generatebutton.setOnClickListener {
             val intent = Intent(this, GenerateResult::class.java)
             startActivity(intent)
