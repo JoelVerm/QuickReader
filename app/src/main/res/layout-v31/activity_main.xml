@@ -13,7 +13,7 @@
         android:layout_marginTop="20dp"
         android:layout_marginLeft="120dp"
         android:background="@drawable/roundedbutton"
-        android:drawableLeft="@drawable/baseline_qr_code_2_24"
+        android:drawableLeft="@drawable/generatebutton"
         android:paddingBottom="5dp"
         android:paddingLeft="5dp"
         android:paddingRight="8dp"
