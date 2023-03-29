@@ -2,16 +2,14 @@ package com.j4a.quickreader
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
@@ -24,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
     private var imageCapture: ImageCapture? = null
+    private var imageToScreenCropRect: Rect? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +60,9 @@ class MainActivity : AppCompatActivity() {
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
+
+            imageToScreenCropRect = preview.resolutionInfo?.cropRect
+
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -71,8 +73,16 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    ImageBitReader(image).read()
+                    val imageToScreenCropRect = imageToScreenCropRect ?: return
+                    val qr = ImageBitReader(image).read(imageToScreenCropRect)
+                    for (row in qr)
+                        Log.d("QR Code", row.contentToString())
                     image.close()
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    super.onError(exception)
+                    Log.e("QR Error", exception.toString())
                 }
             }
         )
