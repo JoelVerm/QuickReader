@@ -5,17 +5,23 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import java.net.URL
+import androidx.appcompat.app.AppCompatActivity
 
 class ReaderResult : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reader_result)
+
+        val extras = intent.extras
+        if (extras != null) {
+            val resultText = extras.getString("QRResult")
+            val textBox = findViewById<TextView>(R.id.resultText)
+            textBox.text = resultText
+        }
 
         val returnmainbutton = findViewById<Button>(R.id.returnmainbutton)
         returnmainbutton.setOnClickListener {
@@ -25,6 +31,7 @@ class ReaderResult : AppCompatActivity() {
 
         val copybutton = findViewById<Button>(R.id.copybutton)
         copybutton.setOnClickListener {
+            copyTextToClipboard()
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
@@ -37,10 +44,6 @@ class ReaderResult : AppCompatActivity() {
             i.data = Uri.parse(url)
             startActivity(i)
         }
-    }
-    fun setQRResult(value:String) {
-        val textBox = findViewById<TextView>(R.id.resultText)
-        textBox.text = value
     }
 
     private fun copyTextToClipboard() {

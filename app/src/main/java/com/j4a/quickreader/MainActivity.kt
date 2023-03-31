@@ -16,6 +16,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
+import java.util.concurrent.Callable
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,8 +32,6 @@ class MainActivity : AppCompatActivity() {
 
         if (allPermissionsGranted()) {
             startCamera()
-            val shootButton = findViewById<Button>(R.id.shootButton)
-            shootButton.setOnClickListener { takePhoto() }
         } else
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
@@ -40,9 +39,17 @@ class MainActivity : AppCompatActivity() {
 
         val shootButton = findViewById<Button>(R.id.shootButton)
         shootButton.setOnClickListener {
-            takePhoto()
-            val intent = Intent(this, ReaderResult::class.java)
-            startActivity(intent)
+            takePhoto {
+                val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
+                val qr = ImageBitReader(it).read(imageToScreenCropRect)
+                it.close()
+                val decoder = QRDecoder(qr)
+                val text = decoder.readQR()
+
+                val intent = Intent(this, ReaderResult::class.java)
+                intent.putExtra("QRResult", text)
+                startActivity(intent)
+            }
         }
 
         val generatorbutton = findViewById<Button>(R.id.generatorbutton)
@@ -86,19 +93,14 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun takePhoto() {
+    private fun takePhoto(callback: (ImageProxy) -> Unit) {
         val imageCapture = imageCapture ?: return
 
         imageCapture.takePicture(
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    val imageToScreenCropRect = imageToScreenCropRect ?: return
-                    val qr = ImageBitReader(image).read(imageToScreenCropRect)
-                    for (row in qr)
-                        Log.d("QR Code", row.contentToString())
-                    Log.d("QR code one line", qr.contentDeepToString())
-                    image.close()
+                    callback(image)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
