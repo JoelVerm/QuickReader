@@ -4,11 +4,13 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import java.net.URL
 
 class ReaderResult : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,6 +27,15 @@ class ReaderResult : AppCompatActivity() {
         copybutton.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
+        }
+
+        val browsebutton = findViewById<Button>(R.id.browsebutton)
+        browsebutton.setOnClickListener {
+            val textBox = findViewById<TextView>(R.id.resultText)
+            val url = textBox.text.toString()
+            val i = Intent(Intent.ACTION_VIEW)
+            i.data = Uri.parse(url)
+            startActivity(i)
         }
     }
     fun setQRResult(value:String) {

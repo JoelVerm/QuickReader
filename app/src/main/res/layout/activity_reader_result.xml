@@ -45,7 +45,7 @@
         android:insetBottom="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_bias="0.3"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
@@ -58,5 +58,27 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/browsebutton"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/roundedbutton"
+        android:backgroundTint="@color/black"
+        android:drawableLeft="@drawable/browserbutton"
+        android:drawableTint="@color/white"
+        android:paddingBottom="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="8dp"
+        android:paddingTop="8dp"
+
+
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.7"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
