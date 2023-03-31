@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
                     val qr = ImageBitReader(image).read(imageToScreenCropRect)
                     for (row in qr)
                         Log.d("QR Code", row.contentToString())
+                    Log.d("QR code one line", qr.contentDeepToString())
                     image.close()
                 }
 

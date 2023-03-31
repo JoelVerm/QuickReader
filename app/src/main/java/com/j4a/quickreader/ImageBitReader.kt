@@ -18,7 +18,8 @@ class ImageBitReader(private val image: ImageProxy) {
 
     fun read(imageToScreenCropRect: Rect): Array<IntArray> {
         crop(imageToScreenCropRect)
-        val pixelArray = readColors()
+        var pixelArray = readColors()
+        pixelArray = smartCrop(pixelArray)
         return imageToQr(pixelArray)
     }
 
@@ -36,55 +37,56 @@ class ImageBitReader(private val image: ImageProxy) {
         imageHeight = bitmap.height
     }
 
-    fun smartCrop() {
-    val yTop = imageHeight * 0.1
-    val yBottom = imageHeight * 0.9
-    val xLeft = imageWidth * 0.1
-    val xRight = imageWidth * 0.9
+    fun smartCrop(imageArr:Array<IntArray>):Array<IntArray> {
+        var imageArray = imageArr
+        val yTop = (imageHeight * 0.1).toInt()
+        val yBottom = (imageHeight * 0.9).toInt()
+        val xLeft = (imageWidth * 0.1).toInt()
+        val xRight = (imageWidth * 0.9).toInt()
 
-    var leftTop = 0
-    var leftBottom = 0
+        var leftTop = 0
+        var leftBottom = 0
 
-    for (x in 0 until imageWidth) {
-        if (image[yTop][x])
-            leftTop = x
-        if (image[yBottom][x])
-            leftBottom = x
-        if (leftTop != 0 && leftBottom != 0)
-            break
+        for (x in 0 until imageWidth) {
+            if (imageArray[yTop][x] == 1)
+                leftTop = x
+            if (imageArray[yBottom][x] == 1)
+                leftBottom = x
+            if (leftTop != 0 && leftBottom != 0)
+                break
+        }
+
+        var topLeft = 0
+        var topRight = 0
+
+        for (y in 0 until imageWidth) {
+            if (imageArray[y][xLeft] == 1)
+                topLeft = y
+            if (imageArray[y][xRight] == 1)
+                topRight = y
+            if (topLeft != 0 && topRight != 0)
+                break
+        }
+
+        for (y in imageArray.indices) {
+            val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
+            imageArray[y] = imageArray[y].drop(startX).toIntArray()
+        }
+        imageArray = transpose(imageArray)
+        for (x in imageArray.indices) {
+            val startY = topLeft + (topRight - topLeft) * (x/imageWidth)
+            imageArray[x] = imageArray[x].drop(startY).toIntArray()
+        }
+        imageArray = transpose(imageArray)
+        //trim right
+        return imageArray
     }
 
-    var topLeft = 0
-    var topRight = 0
-
-    for (y in 0 until imageWidth) {
-        if (image[y][xLeft])
-            topLeft = y
-        if (image[y][xRight])
-            topRight = y
-        if (topLeft != 0 && topRight != 0)
-            break
-    }
-
-    for (y in 0 until imageHeight) {
-        val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
-        image[y] = image[y].slice(startX, end)
-    }
-    image = transpose(image)
-    for (y in 0 until imageHeight) {
-        val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
-        image[y] = image[y].slice(startX, end)
-    }
-    image = transpose(image)
-    //trim right
-
-    }
-
-    fun <reified T> transpose(xs: Array<Array<T>>): Array<Array<T>> {
+    private fun transpose(xs: Array<IntArray>): Array<IntArray> {
         val cols = xs[0].size
         val rows = xs.size
         return Array(cols) { j ->
-            Array(rows) { i -> 
+            IntArray(rows) { i ->
                 xs[i][j]
             }
         }
@@ -96,9 +98,19 @@ class ImageBitReader(private val image: ImageProxy) {
         val imageWidth = imageArray[0].size
 
         var scanPos = 0
-        while (imageArray[scanPos][scanPos] == 1)
+        var scanStart = 0
+        var lastValue = 0
+        while (true) {
             scanPos++
-        val pixelsPerBit = scanPos
+            if (imageArray[scanPos][scanPos] == 1) {
+                if (lastValue == 0)
+                    scanStart = scanPos
+            }
+            else
+                if (lastValue == 1) break
+            lastValue = imageArray[scanPos][scanPos]
+        }
+        val pixelsPerBit = scanPos - scanStart
 
         val qrCodeHeight = imageHeight / pixelsPerBit
         val qrCodeWidth = imageWidth / pixelsPerBit
