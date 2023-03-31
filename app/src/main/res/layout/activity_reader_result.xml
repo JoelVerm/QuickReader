@@ -49,10 +49,9 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/resultText"
         android:layout_width="300dp"
         android:layout_height="300dp"
-        android:text="Text result"
         android:textAlignment="center"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"

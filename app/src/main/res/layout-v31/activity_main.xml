@@ -38,7 +38,6 @@
         android:paddingLeft="5dp"
         android:paddingRight="8dp"
         android:paddingTop="5dp"
-
         android:insetTop="0dp"
         android:insetBottom="0dp"
         app:layout_constraintTop_toTopOf="parent"
@@ -78,8 +77,6 @@
         android:paddingLeft="10dp"
         android:paddingRight="8dp"
         android:paddingTop="8dp"
-
-
         android:insetTop="0dp"
         android:insetBottom="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
