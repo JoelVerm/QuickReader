@@ -36,6 +36,61 @@ class ImageBitReader(private val image: ImageProxy) {
         imageHeight = bitmap.height
     }
 
+    fun smartCrop() {
+    val yTop = imageHeight * 0.1
+    val yBottom = imageHeight * 0.9
+    val xLeft = imageWidth * 0.1
+    val xRight = imageWidth * 0.9
+
+    var leftTop = 0
+    var leftBottom = 0
+
+    for (x in 0 until imageWidth) {
+        if (image[yTop][x])
+            leftTop = x
+        if (image[yBottom][x])
+            leftBottom = x
+        if (leftTop != 0 && leftBottom != 0)
+            break
+    }
+
+    var topLeft = 0
+    var topRight = 0
+
+    for (y in 0 until imageWidth) {
+        if (image[y][xLeft])
+            topLeft = y
+        if (image[y][xRight])
+            topRight = y
+        if (topLeft != 0 && topRight != 0)
+            break
+    }
+
+    for (y in 0 until imageHeight) {
+        val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
+        image[y] = image[y].slice(startX, end)
+    }
+    image = transpose(image)
+    for (y in 0 until imageHeight) {
+        val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
+        image[y] = image[y].slice(startX, end)
+    }
+    image = transpose(image)
+    //trim right
+
+    }
+
+    fun <reified T> transpose(xs: Array<Array<T>>): Array<Array<T>> {
+        val cols = xs[0].size
+        val rows = xs.size
+        return Array(cols) { j ->
+            Array(rows) { i -> 
+                xs[i][j]
+            }
+        }
+    }
+
+
     private fun imageToQr(imageArray: Array<IntArray>): Array<IntArray> {
         val imageHeight = imageArray.size
         val imageWidth = imageArray[0].size
