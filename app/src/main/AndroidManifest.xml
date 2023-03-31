@@ -1,4 +1,5 @@
-<<<<<<< Original<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:tools="http://schemas.android.com/tools">
 
 <uses-feature android:name="android.hardware.camera" />
@@ -18,7 +19,7 @@ xmlns:tools="http://schemas.android.com/tools">
     android:theme="@style/Theme.QuickReader"
     tools:targetApi="31">
     <activity
-        android:name=""
+        android:name=".Settings"
         android:exported="false"
         android:label="@string/title_activity_settings" />
     <activity
@@ -37,15 +38,4 @@ xmlns:tools="http://schemas.android.com/tools">
         </intent-filter>
     </activity>
 </application>
-
-</manifest>=======
-
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<application>
-    <activity
-        android:name="com.j4a.quickreader.Settings"
-        android:exported="false"
-
-        />
-</application>
-</manifest>>>>>>>> Added
+</manifest>
