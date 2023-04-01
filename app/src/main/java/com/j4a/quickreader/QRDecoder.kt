@@ -9,7 +9,7 @@ class QRDecoder(private var qrData: Array<IntArray>) {
         }
         val length: Int = getLength()
         val errorCorrectionLevel: String = getErrorCorrectionLevel().toString()
-        val modeIndicator: String = getModeIndicator().toString()
+        val modeIndicator: String = getModeIndicator()
         for (c in 1..length) {
             contents += sliceByte(c, modeIndicator)
         }
@@ -21,9 +21,10 @@ class QRDecoder(private var qrData: Array<IntArray>) {
         return errorCorrectionLevel
     }
 
-    private fun getModeIndicator(): String? {
+    private fun getModeIndicator(): String {
         val modeIndicators = mapOf("0001" to "numeric", "0010" to "alphanumeric", "0100" to "byte", "1000" to "kanji")
-        val modeIndicator: String? = modeIndicators[qrData[20][20].toString() + qrData[20][19].toString() + qrData[19][20].toString() + qrData[19][19].toString()]
+        val modeIndicator: String = modeIndicators[qrData[20][20].toString() + qrData[20][19].toString() + qrData[19][20].toString() + qrData[19][19].toString()]
+            ?: throw Exception("Invalid mode indicator, please try to scan again")
         return modeIndicator
     }
 
@@ -31,7 +32,7 @@ class QRDecoder(private var qrData: Array<IntArray>) {
                           modeIndicator: String = "byte"
     ): String {
         val byteLengths = mapOf("numeric" to 10, "alphanumeric" to 11, "byte" to 8, "kanji" to 13, "decimal" to 8)
-        val byteLength: Int = byteLengths[modeIndicator]!!
+        val byteLength: Int = byteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
         val sliceStart: Int = 4 + byte * 8
         val bitData = mutableListOf<Int>()
         for (doubleColumn in 20 downTo 2 step 2) { // gaat kolommen af
