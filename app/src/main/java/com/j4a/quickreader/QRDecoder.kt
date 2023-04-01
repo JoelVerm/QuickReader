@@ -1,11 +1,12 @@
 package com.j4a.quickreader
+import android.util.Log
 import kotlin.math.*
 
 class QRDecoder(private var qrData: Array<IntArray>) {
     fun readQR(): String {
         var contents = ""
         if (!applyMaskPattern()) {
-            println("Error occured while trying to apply maskpattern")
+            throw Exception("Error occured while trying to apply maskpattern")
         }
         val length: Int = getLength()
         val errorCorrectionLevel: String = getErrorCorrectionLevel().toString()
@@ -33,7 +34,7 @@ class QRDecoder(private var qrData: Array<IntArray>) {
     ): String {
         val byteLengths = mapOf("numeric" to 10, "alphanumeric" to 11, "byte" to 8, "kanji" to 13, "decimal" to 8)
         val byteLength: Int = byteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
-        val sliceStart: Int = 4 + byte * 8
+        val sliceStart: Int = 4 + byte * byteLength
         val bitData = mutableListOf<Int>()
         for (doubleColumn in 20 downTo 2 step 2) { // gaat kolommen af
             if ((doubleColumn / 2) % 2 == 0) { // omhoog
@@ -72,8 +73,8 @@ class QRDecoder(private var qrData: Array<IntArray>) {
                 }
                 "alphanumeric" -> {
                     val alphaNumericChars = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',  'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':')
-                    val char1 = alphaNumericChars[(floor(byteNumber / 45)).toInt()]
-                    val char2 = alphaNumericChars[(byteNumber - floor(byteNumber / 45)).toInt()]
+                    val char1 = alphaNumericChars[(byteNumber - floor(byteNumber / 45) * 45).toInt()]
+                    val char2 = alphaNumericChars[(floor(byteNumber / 45)).toInt()]
                     returnData = char1.toString() + char2.toString()
                 }
                 "byte" -> {

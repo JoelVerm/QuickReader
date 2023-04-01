@@ -43,8 +43,6 @@ class MainActivity : AppCompatActivity() {
                 val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
                 val qr = ImageBitReader(it).read(imageToScreenCropRect)
                 it.close()
-                for (row in qr)
-                    Log.d("QR code", row.contentToString())
                 val decoder = QRDecoder(qr)
                 val text = decoder.readQR()
 
