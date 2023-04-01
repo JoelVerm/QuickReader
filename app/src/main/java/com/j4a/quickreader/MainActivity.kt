@@ -40,15 +40,20 @@ class MainActivity : AppCompatActivity() {
         val shootButton = findViewById<Button>(R.id.shootButton)
         shootButton.setOnClickListener {
             takePhoto {
-                val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
-                val qr = ImageBitReader(it).read(imageToScreenCropRect)
-                it.close()
-                val decoder = QRDecoder(qr)
-                val text = decoder.readQR()
+                try {
+                    val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
+                    val qr = ImageBitReader(it).read(imageToScreenCropRect)
+                    it.close()
+                    val decoder = QRDecoder(qr)
+                    val text = decoder.readQR()
 
-                val intent = Intent(this, ReaderResult::class.java)
-                intent.putExtra("QRResult", text)
-                startActivity(intent)
+                    val intent = Intent(this, ReaderResult::class.java)
+                    intent.putExtra("QRResult", text)
+                    startActivity(intent)
+                } catch (e:Exception) {
+                    Toast.makeText(this, "Cannot read the QR, please try again", Toast.LENGTH_LONG).show()
+                    Log.e("QR error", e.toString())
+                }
             }
         }
 
