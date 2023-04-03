@@ -1,22 +1,22 @@
 package com.j4a.quickreader
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
+import java.util.concurrent.Callable
 
 
 class MainActivity : AppCompatActivity() {
@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
     private var imageCapture: ImageCapture? = null
+    private var imageToScreenCropRect: Rect? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,12 +32,42 @@ class MainActivity : AppCompatActivity() {
 
         if (allPermissionsGranted()) {
             startCamera()
-            val shootButton = findViewById<Button>(R.id.shootButton)
-            shootButton.setOnClickListener { takePhoto() }
         } else
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
+
+        val shootButton = findViewById<Button>(R.id.shootButton)
+        shootButton.setOnClickListener {
+            takePhoto {
+                try {
+                    val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
+                    val qr = ImageBitReader(it).read(imageToScreenCropRect)
+                    it.close()
+                    val decoder = QRDecoder(qr)
+                    val text = decoder.readQR()
+
+                    val intent = Intent(this, ReaderResult::class.java)
+                    intent.putExtra("QRResult", text)
+                    startActivity(intent)
+                } catch (e:Exception) {
+                    Toast.makeText(this, "Cannot read the QR, please try again", Toast.LENGTH_LONG).show()
+                    Log.e("QR error", e.toString())
+                }
+            }
+        }
+
+        val generatorbutton = findViewById<Button>(R.id.generatorbutton)
+        generatorbutton.setOnClickListener {
+            val intent = Intent(this, GenerateQr::class.java)
+            startActivity(intent)
+        }
+
+        val settingsbutton = findViewById<Button>(R.id.settingsbutton)
+        settingsbutton.setOnClickListener {
+            val intent = Intent(this, Settings::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun startCamera() {
@@ -61,18 +92,25 @@ class MainActivity : AppCompatActivity() {
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
+
+            imageToScreenCropRect = preview.resolutionInfo?.cropRect
+
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun takePhoto() {
+    private fun takePhoto(callback: (ImageProxy) -> Unit) {
         val imageCapture = imageCapture ?: return
 
         imageCapture.takePicture(
             ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    ImageBitReader(image).read()
-                    image.close()
+                    callback(image)
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    super.onError(exception)
+                    Log.e("QR Error", exception.toString())
                 }
             }
         )
