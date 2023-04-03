@@ -25,8 +25,7 @@ class ReaderResult : AppCompatActivity() {
 
         val returnmainbutton = findViewById<Button>(R.id.returnmainbutton)
         returnmainbutton.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            finish()
         }
 
         val copybutton = findViewById<Button>(R.id.copybutton)
