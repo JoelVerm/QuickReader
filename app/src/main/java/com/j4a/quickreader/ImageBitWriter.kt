@@ -5,11 +5,11 @@ import android.graphics.Color
 import android.media.Image
 import androidx.core.graphics.scale
 
-fun <T>enumerate(arr: Array<T>): List<Pair<Int, T>> {
-    return arr.indices.zip(arr)
+fun <T>Array<T>.enumerate(): List<Pair<Int, T>> {
+    return this.indices.zip(this)
 }
-fun enumerate(arr: IntArray): List<Pair<Int, Int>> {
-    return arr.indices.zip(arr.toTypedArray())
+fun IntArray.enumerate(): List<Pair<Int, Int>> {
+    return this.indices.zip(this.toTypedArray())
 }
 
 class ImageBitWriter() {
@@ -19,8 +19,8 @@ class ImageBitWriter() {
     }
     private fun createBitmap(bitArray: Array<IntArray>): Bitmap {
         val QRCode = Bitmap.createBitmap(21, 21, Bitmap.Config.ARGB_8888)
-        for ((y, row) in enumerate(bitArray)) {
-            for ((x, value) in enumerate(row)) {
+        for ((y, row) in bitArray.enumerate()) {
+            for ((x, value) in row.enumerate()) {
                 if (value == 1){
                     QRCode.setPixel(x, y,  Color.argb(255, 0, 0, 0))
                 }
