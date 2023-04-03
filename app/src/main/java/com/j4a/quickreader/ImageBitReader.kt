@@ -4,7 +4,34 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Rect
+import android.util.Log
 import androidx.camera.core.ImageProxy
+import kotlin.math.max
+
+infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
+    require(start.isFinite())
+    require(endInclusive.isFinite())
+    require(step > 0.0) { "Step must be positive, was: $step." }
+    val sequence = generateSequence(start) { previous ->
+        if (previous == Double.POSITIVE_INFINITY) return@generateSequence null
+        val next = previous + step
+        if (next > endInclusive) null else next
+    }
+    return sequence.asIterable()
+}
+
+fun Array<IntArray>.transpose(): Array<IntArray> {
+    val cols = this[0].size
+    val rows = this.size
+    return Array(cols) { j ->
+        IntArray(rows) { i ->
+            this[i][j]
+        }
+    }
+}
+
+fun List<Int>.padEnd(size: Int) =
+    this + List(if (this.size <= size) size - this.size else throw Exception("Pad size too small")) { 0 }
 
 class ImageBitReader(private val image: ImageProxy) {
     private var bitmap: Bitmap = run {
@@ -39,59 +66,45 @@ class ImageBitReader(private val image: ImageProxy) {
 
     fun smartCrop(imageArr:Array<IntArray>):Array<IntArray> {
         var imageArray = imageArr
-        val yTop = (imageHeight * 0.1).toInt()
-        val yBottom = (imageHeight * 0.9).toInt()
-        val xLeft = (imageWidth * 0.1).toInt()
-        val xRight = (imageWidth * 0.9).toInt()
 
-        var leftTop = 0
-        var leftBottom = 0
+        val cropImage = {
+            image: Array<IntArray> ->
 
-        for (x in 0 until imageWidth) {
-            if (imageArray[yTop][x] == 1)
-                leftTop = x
-            if (imageArray[yBottom][x] == 1)
-                leftBottom = x
-            if (leftTop != 0 && leftBottom != 0)
-                break
+            val topY = (image.size * 0.1).toInt()
+            val bottomY = (image.size * 0.9).toInt()
+
+            var topX = 0
+            var topXSet = false
+            var bottomX = 0
+            var bottomXSet = false
+            for (x in image.indices) {
+                if (image[topY][x] == 1 && !topXSet) {
+                    topX = x
+                    topXSet = true
+                }
+                if (image[bottomY][x] == 1 && !bottomXSet) {
+                    bottomX = x
+                    bottomXSet = true
+                }
+                if (topXSet && bottomXSet)
+                    break
+            }
+
+            val increaseX = (bottomX - topX) / 0.8
+            val startX = topX - 0.1 * increaseX
+            for (y in image.indices) {
+                val x = max((startX + increaseX * (y.toFloat()/imageHeight)).toInt(), 0)
+                image[y] = image[y].drop(x).padEnd(image[y].size).toIntArray()
+            }
+            image
         }
 
-        var topLeft = 0
-        var topRight = 0
-
-        for (y in 0 until imageWidth) {
-            if (imageArray[y][xLeft] == 1)
-                topLeft = y
-            if (imageArray[y][xRight] == 1)
-                topRight = y
-            if (topLeft != 0 && topRight != 0)
-                break
-        }
-
-        for (y in imageArray.indices) {
-            val startX = leftTop + (leftBottom - leftTop) * (y/imageHeight)
-            imageArray[y] = imageArray[y].drop(startX).toIntArray()
-        }
-        imageArray = transpose(imageArray)
-        for (x in imageArray.indices) {
-            val startY = topLeft + (topRight - topLeft) * (x/imageWidth)
-            imageArray[x] = imageArray[x].drop(startY).toIntArray()
-        }
-        imageArray = transpose(imageArray)
-        //trim right
+        imageArray = cropImage(imageArray)
+        imageArray = imageArray.transpose()
+        imageArray = cropImage(imageArray)
+        imageArray = imageArray.transpose()
         return imageArray
     }
-
-    private fun transpose(xs: Array<IntArray>): Array<IntArray> {
-        val cols = xs[0].size
-        val rows = xs.size
-        return Array(cols) { j ->
-            IntArray(rows) { i ->
-                xs[i][j]
-            }
-        }
-    }
-
 
     private fun imageToQr(imageArray: Array<IntArray>): Array<IntArray> {
         val imageHeight = imageArray.size
@@ -111,8 +124,8 @@ class ImageBitReader(private val image: ImageProxy) {
             }
             scanPos - scanStart
         }
-        val pixelsPerBitX = run {
-            val y = guessPixelsPerBit * 2
+        val pixelsPerBitX = (1.5 .. 3.5 step 0.1).map {
+            val y = (guessPixelsPerBit * it).toInt()
             var x = 0
             var xStart = 0
             var lastValue = 0
@@ -126,9 +139,11 @@ class ImageBitReader(private val image: ImageProxy) {
                 lastValue = imageArray[y][x]
             }
             x - xStart
+        }.run {
+            this.sum() / this.size
         }
-        val pixelsPerBitY = run {
-            val x = guessPixelsPerBit * 2
+        val pixelsPerBitY = (1.5 .. 3.5 step 0.1).map {
+            val x = (guessPixelsPerBit * it).toInt()
             var y = 0
             var yStart = 0
             var lastValue = 0
@@ -142,6 +157,8 @@ class ImageBitReader(private val image: ImageProxy) {
                 lastValue = imageArray[y][x]
             }
             y - yStart
+        }.run {
+            this.sum() / this.size
         }
 
         val qrCodeHeight = imageHeight / pixelsPerBitY
@@ -160,75 +177,6 @@ class ImageBitReader(private val image: ImageProxy) {
             }
         }
 
-        return qrcodeArray
-    }
-
-    private fun imageToQrLegacy(imageArray: Array<IntArray>): Array<IntArray> {
-        val imageHeight = imageArray.size
-        val imageWidth = imageArray[0].size
-        val qrcodeArray = Array(21) { IntArray(21) }
-
-        val storeCounts = mutableListOf<Int>()
-        referenceFound@ for (y in 0 until imageHeight) {
-            var countBlack = 0
-            var countWhite = 0
-            var blackStart = imageArray[0][0]
-            var whiteStart = (imageArray[0][0] * -1 + 1)
-            for (x in 0 until imageWidth) {
-                if (whiteStart == 1) {
-                    if (imageArray[y][x] == 0) {
-                        countWhite += 1
-                    } else {
-                        whiteStart = 0
-                        blackStart = 1
-                        countBlack = 1
-                        storeCounts.add(countWhite)
-                        continue
-                    }
-                }
-                if (blackStart == 1) {
-                    if (imageArray[y][x] == 1) {
-                        countBlack += 1
-                    } else {
-                        whiteStart = 1
-                        blackStart = 0
-                        countWhite = 1
-                        storeCounts.add(countBlack)
-                        continue
-                    }
-                }
-            }
-            if (whiteStart == 1) {
-                storeCounts.add(countWhite)
-            }
-            if (blackStart == 1) {
-                storeCounts.add(countBlack)
-            }
-            if (storeCounts.size == 11) {
-                if (storeCounts[1] == storeCounts[9]) {
-                    var foundPattern = true
-                    val lowerLimit = 6.9
-                    val upperLimit = 7.1
-                    for (num in 2..8) {
-                        if (!(storeCounts[num].toDouble() <= storeCounts[1] / lowerLimit && storeCounts[num].toDouble() >= storeCounts[1] / upperLimit)) {
-                            foundPattern = false
-                        }
-                    }
-                    if (foundPattern) {
-                        val pixelsBox = storeCounts[1] / 7.0
-                        val pixelsMargin = storeCounts[0].toDouble()
-                        for (y_in in 0..20) {
-                            for (x_in in 0..20) {
-                                qrcodeArray[y_in][x_in] =
-                                    imageArray[(pixelsMargin + pixelsBox / 2 + y_in * pixelsBox).toInt()][(pixelsMargin + pixelsBox / 2 + x_in * pixelsBox).toInt()]
-                            }
-                        }
-                        break@referenceFound
-                    }
-                }
-            }
-            storeCounts.clear()
-        }
         return qrcodeArray
     }
 
