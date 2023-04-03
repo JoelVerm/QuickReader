@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.scale
+import java.lang.Math.min
 
 class GenerateResult : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,8 +27,10 @@ class GenerateResult : AppCompatActivity() {
         val QREncoder = QREncoder()
         val QRData = QREncoder.createQR(text)
         val imageBitWriter = ImageBitWriter()
-        val bitmap = imageBitWriter.write(QRData)
+        var bitmap = imageBitWriter.write(QRData)
         val imageView = findViewById<ImageView>(R.id.resultImage)
+        val minSize = min(imageView.width, imageView.height)
+        bitmap = bitmap.scale(minSize, minSize)
         imageView.setImageBitmap(bitmap)
 
         val returngenresbutton = findViewById<Button>(R.id.returngenresbutton)
