@@ -96,34 +96,66 @@ class ImageBitReader(private val image: ImageProxy) {
     private fun imageToQr(imageArray: Array<IntArray>): Array<IntArray> {
         val imageHeight = imageArray.size
         val imageWidth = imageArray[0].size
-
-        var scanPos = 0
-        var scanStart = 0
-        var lastValue = 0
-        while (true) {
-            scanPos++
-            if (imageArray[scanPos][scanPos] == 1) {
-                if (lastValue == 0)
-                    scanStart = scanPos
+        val guessPixelsPerBit = run {
+            var scanPos = 0
+            var scanStart = 0
+            var lastValue = 0
+            while (true) {
+                scanPos++
+                if (imageArray[scanPos][scanPos] == 1) {
+                    if (lastValue == 0)
+                        scanStart = scanPos
+                } else
+                    if (lastValue == 1) break
+                lastValue = imageArray[scanPos][scanPos]
             }
-            else
-                if (lastValue == 1) break
-            lastValue = imageArray[scanPos][scanPos]
+            scanPos - scanStart
         }
-        val pixelsPerBit = scanPos - scanStart
+        val pixelsPerBitX = run {
+            val y = guessPixelsPerBit * 2
+            var x = 0
+            var xStart = 0
+            var lastValue = 0
+            while (true) {
+                x++
+                if (imageArray[y][x] == 1) {
+                    if (lastValue == 0)
+                        xStart = x
+                } else
+                    if (lastValue == 1) break
+                lastValue = imageArray[y][x]
+            }
+            x - xStart
+        }
+        val pixelsPerBitY = run {
+            val x = guessPixelsPerBit * 2
+            var y = 0
+            var yStart = 0
+            var lastValue = 0
+            while (true) {
+                y++
+                if (imageArray[y][x] == 1) {
+                    if (lastValue == 0)
+                        yStart = y
+                } else
+                    if (lastValue == 1) break
+                lastValue = imageArray[y][x]
+            }
+            y - yStart
+        }
 
-        val qrCodeHeight = imageHeight / pixelsPerBit
-        val qrCodeWidth = imageWidth / pixelsPerBit
+        val qrCodeHeight = imageHeight / pixelsPerBitY
+        val qrCodeWidth = imageWidth / pixelsPerBitX
         val qrcodeArray = Array(qrCodeHeight) { IntArray(qrCodeWidth) }
 
         for (y in 0 until qrCodeHeight) {
             for (x in 0 until qrCodeWidth) {
                 // sum all items in the current square bit
-                val imageY = y * pixelsPerBit
-                val imageX = x * pixelsPerBit
-                val sum = imageArray.slice(imageY until (imageY + pixelsPerBit))
-                    .sumOf { it.slice(imageX until (imageX + pixelsPerBit)).sum() }
-                val average = sum.toFloat() / (pixelsPerBit * pixelsPerBit).toFloat()
+                val imageY = y * pixelsPerBitY
+                val imageX = x * pixelsPerBitX
+                val sum = imageArray.slice(imageY until (imageY + pixelsPerBitY))
+                    .sumOf { it.slice(imageX until (imageX + pixelsPerBitX)).sum() }
+                val average = sum.toFloat() / (pixelsPerBitX * pixelsPerBitY).toFloat()
                 qrcodeArray[y][x] = if (average > 0.5) 1 else 0
             }
         }
