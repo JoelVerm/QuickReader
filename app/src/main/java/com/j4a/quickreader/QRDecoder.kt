@@ -64,8 +64,6 @@ class QRDecoder(private var qrData: Array<IntArray>) {
         val lengthByteLengths = mapOf("numeric" to 10, "alphanumeric" to 9, "byte" to 8, "kanji" to 8, "decimal" to 8)
         val lengthByteLength: Int = lengthByteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
         val sliceStart: Int = 4 + lengthByteLength + (byte - 1) * byteLength
-        Log.d("QR lalalalala", sliceStart.toString())
-        Log.d("QR nogmeerlala", byteLength.toString())
         var returnData = ""
         var index = 0
         var byteNumber = 0.0
@@ -73,8 +71,6 @@ class QRDecoder(private var qrData: Array<IntArray>) {
             byteNumber += bit * 2.0.pow(index.toDouble())
             index += 1
         }
-        Log.d("QR bitslala", byteNumber.toInt().toString(2))
-        Log.d("QR intlala", byteNumber.toString())
         when(modeIndicator) {
             "decimal" -> {
                 returnData = byteNumber.toString()
