@@ -1,14 +1,26 @@
 package com.j4a.quickreader
 
+import android.app.Dialog
+import android.content.Context
+import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
+import android.view.ViewGroup
+import android.view.Window
+import android.widget.ImageView
+import android.widget.RelativeLayout
 import androidx.camera.core.ImageProxy
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.scale
+import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
+
 
 infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
     require(start.isFinite())
@@ -35,7 +47,28 @@ fun Array<IntArray>.transpose(): Array<IntArray> {
 fun List<Int>.padEnd(size: Int) =
     this + List(if (this.size <= size) size - this.size else throw Exception("Pad size too small")) { 0 }
 
-class ImageBitReader(private val image: ImageProxy) {
+fun Bitmap.showDialog(androidContext: Context) {
+    val builder = Dialog(androidContext)
+    builder.requestWindowFeature(Window.FEATURE_NO_TITLE)
+    builder.window!!.setBackgroundDrawable(
+        ColorDrawable(Color.TRANSPARENT)
+    )
+    builder.setOnDismissListener(DialogInterface.OnDismissListener {
+        //nothing;
+    })
+
+    val imageView = ImageView(androidContext)
+    imageView.setImageBitmap(this)
+    builder.addContentView(
+        imageView, RelativeLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+    )
+    builder.show()
+}
+
+class ImageBitReader(private val image: ImageProxy, private val androidContext: Context) {
     private var bitmap: Bitmap = run {
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.capacity())
@@ -90,8 +123,8 @@ class ImageBitReader(private val image: ImageProxy) {
                 if (topYSet && bottomYSet)
                     break
             }
-            topY += 10
-            bottomY -= 10
+            topY += imageHeight / 10
+            bottomY -= imageHeight / 10
 
             var topX = 0
             var topXSet = false

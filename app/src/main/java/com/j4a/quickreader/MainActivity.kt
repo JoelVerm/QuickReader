@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
             takePhoto {
                 try {
                     val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
-                    val qr = ImageBitReader(it).read(imageToScreenCropRect)
+                    val qr = ImageBitReader(it, this).read(imageToScreenCropRect)
                     it.close()
                     val decoder = QRDecoder(qr)
                     val text = decoder.readQR()
