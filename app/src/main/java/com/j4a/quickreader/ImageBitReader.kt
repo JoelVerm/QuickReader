@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -116,8 +117,6 @@ class ImageBitReader(private val image: ImageProxy) {
                 image[y] = image[y].drop(x).padEnd(image[y].size).toIntArray()
             }
 
-            val tempImg = ImageBitWriter().write(image)
-
             image
         }
 
@@ -146,7 +145,7 @@ class ImageBitReader(private val image: ImageProxy) {
             }
             scanPos - scanStart
         }
-        val pixelsPerBitX = (1.5 .. 3.5 step 0.1).map {
+        val pixelsPerBitX = ((1.5 .. 4.5 step 0.1).map {
             val y = (guessPixelsPerBit * it).toInt()
             var x = 0
             var xStart = 0
@@ -160,11 +159,26 @@ class ImageBitReader(private val image: ImageProxy) {
                     if (lastValue == 1) break
                 lastValue = imageArray[y][x]
             }
-            x - xStart
-        }.run {
+            abs(x - xStart)
+        }+(1.5 .. 4.5 step 0.1).map {
+            val y = (guessPixelsPerBit * it).toInt()
+            var x = imageWidth - 1
+            var xStart = 0
+            var lastValue = 0
+            while (true) {
+                x--
+                if (imageArray[y][x] == 1) {
+                    if (lastValue == 0)
+                        xStart = x
+                } else
+                    if (lastValue == 1) break
+                lastValue = imageArray[y][x]
+            }
+           abs( x - xStart)
+        }).run {
             this.sum() / this.size
         }
-        val pixelsPerBitY = (1.5 .. 3.5 step 0.1).map {
+        val pixelsPerBitY = ((1.5 .. 4.5 step 0.1).map {
             val x = (guessPixelsPerBit * it).toInt()
             var y = 0
             var yStart = 0
@@ -178,8 +192,23 @@ class ImageBitReader(private val image: ImageProxy) {
                     if (lastValue == 1) break
                 lastValue = imageArray[y][x]
             }
-            y - yStart
-        }.run {
+            abs(y - yStart)
+        } + (1.5 .. 4.5 step 0.1).map {
+            val x = (guessPixelsPerBit * it).toInt()
+            var y = imageHeight - 1
+            var yStart = 0
+            var lastValue = 0
+            while (true) {
+                y--
+                if (imageArray[y][x] == 1) {
+                    if (lastValue == 0)
+                        yStart = y
+                } else
+                    if (lastValue == 1) break
+                lastValue = imageArray[y][x]
+            }
+            abs(y - yStart)
+        }).run {
             this.sum() / this.size
         }
 
@@ -199,36 +228,27 @@ class ImageBitReader(private val image: ImageProxy) {
             }
         }
 
-        val tempImg = ImageBitWriter().write(qrcodeArray)
-        for (row in qrcodeArray)
-            Log.d("QR array", row.contentToString())
-
         return qrcodeArray
     }
 
     private fun readColors(): Array<IntArray> {
         val imageArray = Array(imageHeight) { IntArray(imageWidth) }
 
-        var totalRed = 0
-        var totalGreen = 0
-        var totalBlue = 0
-        var pixelCount = 0
+        var maxGrey = 0
+        var minGrey = Int.MAX_VALUE
 
         //Get average pixel color
         for (y in 0 until imageHeight) {
             for (x in 0 until imageWidth) {
                 val pixelColor = bitmap.getPixel(x, y)
-                totalRed += Color.red(pixelColor)
-                totalGreen += Color.green(pixelColor)
-                totalBlue += Color.blue(pixelColor)
-
-                pixelCount += 1
+                val grey = (Color.red(pixelColor) + Color.green(pixelColor) + Color.blue(pixelColor)) / 3
+                if (grey < minGrey)
+                    minGrey = grey
+                if (grey > maxGrey)
+                    maxGrey = grey
             }
         }
-        val avgRed = totalRed / pixelCount
-        val avgGreen = totalGreen / pixelCount
-        val avgBlue = totalBlue / pixelCount
-        val avgGray = (avgRed + avgGreen + avgBlue) / 3
+        val avgGray = (maxGrey + minGrey) / 2
 
         //Checking if color is black/white
         for (y in 0 until imageHeight) {

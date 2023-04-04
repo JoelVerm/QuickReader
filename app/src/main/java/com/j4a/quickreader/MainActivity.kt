@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 } catch (e:Exception) {
                     Toast.makeText(this, "Cannot read the QR, please try again", Toast.LENGTH_LONG).show()
-                    Log.e("QR error", e.toString())
+                    Log.e("QR error", e.stackTraceToString())
                 }
             }
         }
