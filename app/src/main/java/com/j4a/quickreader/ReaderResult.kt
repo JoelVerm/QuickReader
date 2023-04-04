@@ -19,8 +19,7 @@ class ReaderResult : AppCompatActivity() {
 
         val returnmainbutton = findViewById<Button>(R.id.returnmainbutton)
         returnmainbutton.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            finish()
         }
 
         val copybutton = findViewById<Button>(R.id.copybutton)
@@ -32,10 +31,15 @@ class ReaderResult : AppCompatActivity() {
         val browsebutton = findViewById<Button>(R.id.browsebutton)
         browsebutton.setOnClickListener {
             val textBox = findViewById<TextView>(R.id.resultText)
+            val start = "http"
             val url = textBox.text.toString()
             val i = Intent(Intent.ACTION_VIEW)
             i.data = Uri.parse(url)
-            startActivity(i)
+            if (url.startsWith(start)){
+                startActivity(i)
+            } else {
+                Toast.makeText(this, "Result is not a url", Toast.LENGTH_SHORT).show()
+            }
         }
     }
     fun setQRResult(value:String) {

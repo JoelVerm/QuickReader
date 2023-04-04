@@ -12,8 +12,7 @@ class Settings : AppCompatActivity() {
 
         val returnsettingsbutton = findViewById<Button>(R.id.returnsettingbutton)
         returnsettingsbutton.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            finish()
         }
     }
 }

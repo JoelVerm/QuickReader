@@ -12,8 +12,12 @@ class GenerateResult : AppCompatActivity() {
 
         val returngenresbutton = findViewById<Button>(R.id.returngenresbutton)
         returngenresbutton.setOnClickListener {
-            val intent = Intent(this, GenerateQr::class.java)
-            startActivity(intent)
+            finish()
+        }
+
+        val savebutton = findViewById<Button>(R.id.savebutton)
+        savebutton.setOnClickListener {
+
         }
     }
 }

@@ -38,7 +38,7 @@ xmlns:tools="http://schemas.android.com/tools">
     </activity>
 </application>
 
-</manifest>=======
+</manifest>
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <application>
@@ -48,4 +48,4 @@ xmlns:tools="http://schemas.android.com/tools">
 
         />
 </application>
-</manifest>>>>>>>> Added
+</manifest>
