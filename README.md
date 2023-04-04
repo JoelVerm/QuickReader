@@ -20,3 +20,7 @@ On this screen you can scan a QR-code with the camera of your mobile phone to co
 On this screen you can find the text that has been converted from a QR-code.
 
 ![Reader output](readme_images/readResult.jpeg)
+
+# Installing
+
+The apk can be found in the main folder.
