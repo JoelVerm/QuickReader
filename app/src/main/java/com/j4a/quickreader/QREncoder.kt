@@ -1,34 +1,138 @@
 package com.j4a.quickreader
-import android.util.Log
 import kotlin.math.*
 import java.nio.charset.Charset
 
 class QREncoder {
     fun createQR(qrData: String): Array<IntArray> {
+        val qrVersion = 1
         val encodingType = checkType(qrData)
         val encodedData = encodeData(encodingType, qrData)
         val modeIndicator = getModeIndicator(encodingType)
         val charCountIndicator = getCharCountIndicator(encodingType, qrData)
         val errorCorrectionLevel = getErrorCorrectionLevel()
         val qrBits = getQrBits(errorCorrectionLevel, modeIndicator, charCountIndicator, encodedData)
-        errorCorrection(qrBits, errorCorrectionLevel)
-        return arrayOf(intArrayOf())
+        val errorCorrectionCodeWords = getErrorCorrectionCodeWords(qrBits, errorCorrectionLevel)
+        val qrMatrix = getQrMatrix(
+            errorCorrectionLevel,
+            qrBits,
+            errorCorrectionCodeWords,
+            qrVersion
+        )
+        return qrMatrix
     }
 
-    private fun errorCorrection(qrBits: String,
-                                errorCorrectionLevel: Char,
-    ) {
+    private fun getQrMatrix(
+        errorCorrectionLevel: Char,
+        qrBits: String,
+        errorCorrectionCodeWords: String,
+        qrVersion: Int,
+    ): Array<IntArray> {
+        val qrSize = (((qrVersion - 1) * 4) + 21)
+        var qrMatrix = Array(qrSize) { IntArray(qrSize) {0}}
+        val finderPattern = arrayOf(intArrayOf(1, 1, 1, 1, 1, 1, 1),
+            intArrayOf(1, 0, 0, 0, 0, 0, 1),
+            intArrayOf(1, 0, 1, 1, 1, 0, 1),
+            intArrayOf(1, 0, 1, 1, 1, 0, 1),
+            intArrayOf(1, 0, 1, 1, 1, 0, 1),
+            intArrayOf(1, 0, 0, 0, 0, 0, 1),
+            intArrayOf(1, 1, 1, 1, 1, 1, 1))
+        val finderPatternPositions = arrayOf(intArrayOf(0, 0), intArrayOf(0, qrSize - 7), intArrayOf(qrSize - 7, 0))
+        for (finderPatternPosition in finderPatternPositions) { // finder patterns
+            val finderRow = finderPatternPosition[0]
+            val finderColumn = finderPatternPosition[1]
+            for (row in 0 until 7) {
+                for (column in 0 until 7) {
+                    qrMatrix[row + finderRow][column + finderColumn] = finderPattern[row][column]
+                }
+            }
+        }
+        for (index in 8 until (qrSize - 8)) { // timing patterns
+            if (index % 2 == 0) {
+                qrMatrix[6][index] = 1
+                qrMatrix[index][6] = 1
+            }
+        }
+        qrMatrix[(4 * qrVersion) + 9][8] = 1 // dark module
+        val errorCorrectionLevelBitsMap = mapOf('L' to "11", 'M' to "10", 'Q' to "01", 'H' to "00")
+        val errorCorrectionLevelBits = errorCorrectionLevelBitsMap[errorCorrectionLevel]
+        val maskNumber = getMaskPattern()
+        val formatString = errorCorrectionLevelBits + maskNumber
+        for (index in formatString.indices) { // zet formatstring in qrcode
+            qrMatrix[20 - index][8] = formatString[index].code - '0'.code
+            qrMatrix[8][index] = formatString[index].code - '0'.code
+        }
+        val totalQrData = qrBits + errorCorrectionCodeWords
+        var index = 0
+        for (doubleColumn in 20 downTo 2 step 2) { // gaat kolommen af
+            if ((doubleColumn / 2) % 2 == 0) { // omhoog
+                for (row in 20 downTo 1) { //gaat rijen in kolom af
+                    for (column in doubleColumn downTo (doubleColumn - 1)) {
+                        if (!(((row <= 8 && (column <= 8  || column >= 13)) || (row >= 13 && column <= 8) || (row == 6) || (column == 6)))) {
+                            qrMatrix[row][column] = totalQrData[index].code - '0'.code
+                            index += 1
+                        }
+                    }
+                }
+            }
+            else { // naar beneden
+                for (row in 1..20) { //gaat rijen in kolom af
+                    for (column in doubleColumn downTo (doubleColumn - 1)) {
+                        if (!(((row <= 8 && (column <= 8  || column >= 13)) || (row >= 13 && column <= 8) || (row == 6) || (column == 6)))) {
+                            qrMatrix[row][column] = totalQrData[index].code - '0'.code
+                            index += 1
+                        }
+                    }
+                }
+            }
+        }
+        qrMatrix = applyMaskPattern(qrMatrix, maskNumber, qrSize)
+        return qrMatrix
+    }
+
+    private fun getMaskPattern(): String {
+        return "011"
+    }
+
+    private fun applyMaskPattern(qrMatrix: Array<IntArray>,
+                                 maskNumber: String,
+                                 qrSize: Int,
+    ): Array<IntArray> {
+        for (row in 0 until qrSize) {
+            for (column in 0 until qrSize) {
+                if (!(((row <= 8 && (column <= 8  || column >= 13)) || (row >= 13 && column <= 8) || (row == 6) || (column == 6)))) {
+                    var turnBit = false
+                    when (maskNumber) {
+                        "111" -> if ((column) % 3 == 0) turnBit = true
+                        "110" -> if ((row + column) % 3 == 0) turnBit = true
+                        "101" -> if ((row + column) % 2 == 0) turnBit = true
+                        "100" -> if ((row) % 2 == 0) turnBit = true
+                        "011" -> if ((((row * column) % 3 + row * column) % 2) == 0) turnBit = true
+                        "010" -> if ((((row * column) % 3 + row + column) % 2) == 0) turnBit = true
+                        "001" -> if ((((floor(row.toDouble() / 2) + floor(column.toDouble() / 3)) % 2).toInt() == 0)) turnBit = true
+                        "000" -> if ((((row * column) % 2) + (row * column) % 3) == 0) turnBit = true
+                    }
+                    if (turnBit) {
+                        qrMatrix[row][column] = (qrMatrix[row][column] * -1) + 1
+                    }
+                }
+            }
+        }
+        return qrMatrix
+    }
+
+
+    private fun getErrorCorrectionCodeWords(qrBits: String,
+                                            errorCorrectionLevel: Char,
+    ): String {
         var binaryNumbers = intArrayOf()
         for (i in 0 until (qrBits.length / 8)) {
             binaryNumbers += Integer.parseInt(qrBits.slice((i * 8) until (((i + 1) * 8))), 2)
         }
-        Log.d("QR debug log", "1")
         val messagePolynomial = Array(binaryNumbers.size) {IntArray(2) {0} }
         for (i in messagePolynomial.indices) {
             messagePolynomial[i][0] = binaryNumbers[i] // coëfficient
             messagePolynomial[i][1] = messagePolynomial.size - i - 1 // power of x
         }
-        Log.d("QR debug log", "2")
         var numberOfErrorCorrectionCodeWords = 0
         when(errorCorrectionLevel) {
             'L' -> numberOfErrorCorrectionCodeWords = 7
@@ -36,9 +140,9 @@ class QREncoder {
             'Q' -> numberOfErrorCorrectionCodeWords = 13
             'H' -> numberOfErrorCorrectionCodeWords = 17
         }
-        // sign, power of a, power of x
+        // power of a, power of x
         val generatorPolynomial = getGeneratorPolynomial(numberOfErrorCorrectionCodeWords = numberOfErrorCorrectionCodeWords)
-        Log.d("QR genPoly", generatorPolynomial.contentDeepToString())
+        generatorPolynomial.reverse()
         for (term in messagePolynomial) { // verhoogd exponent van x in messagepolynomial
             term[1] += numberOfErrorCorrectionCodeWords
         }
@@ -46,33 +150,38 @@ class QREncoder {
         for (term in generatorPolynomial) { // maakt lead term exponent van x in generatorpolynomial gelijk aan lead term exponent in messagepolynomial
             term[1] += multiplyExponent
         }
-        Log.d("QR debug log", "3")
         val errorCorrectionCodeWords = IntArray(numberOfErrorCorrectionCodeWords)
-        var z = generatorPolynomial.clone()
+        var z = clone(generatorPolynomial)
+        var q = Array(z.size) {IntArray(2) {0}}
         for (i in 1..messagePolynomial.size) { // voer stappen evenvaak uit als lengte van messagepolynomial
             val alphaMultiplyExponent: Int = if (i == 1) {
                 antiLog(messagePolynomial[0][0])
             } else {
-                antiLog(z[0][0])
+                antiLog(q[0][0])
             }
-            Log.d("QR debug log", "4")
-            z = generatorPolynomial.clone()
+            z = clone(generatorPolynomial)
             for (j in z) { // vermenigvuldig generatorpolynomial met lead term van messagepolynomial
                 j[0] = log((j[0] + alphaMultiplyExponent) % 255) // maakt cijfer coefficienten
             }
-            Log.d("QR debug log", "5")
-            val n = Array(messagePolynomial.size) {IntArray(2) {0}}
-            for (counter in messagePolynomial.indices) {
-                n[counter][1] = messagePolynomial[counter][1]
-                if (counter < z.size) {
-                    n[counter][0] = xorInt(z[counter][0], messagePolynomial[counter][0])
+            if (i == 1) {
+                q = messagePolynomial
+            }
+            val n = Array(max(q.size, z.size)) {IntArray(2) {0}}
+            for (counter in 0 until max(q.size, z.size)) {
+                if (counter < z.size && counter < q.size) {
+                    n[counter][1] = q[counter][1]
+                    n[counter][0] = xorInt(z[counter][0], q[counter][0])
+                }
+                else if (counter >= q.size) {
+                    n[counter][1] = z[counter][1]
+                    n[counter][0] = xorInt(0, z[counter][0])
                 }
                 else {
-                    n[counter][0] = xorInt(0, messagePolynomial[counter][0])
+                    n[counter][1] = q[counter][1]
+                    n[counter][0] = xorInt(0, q[counter][0])
                 }
             }
-            Log.d("QR debug log", "6")
-            val q = Array(n.size - 1) {IntArray(2) {0}}
+            q = Array(n.size - 1) {IntArray(2) {0}}
             if (n[0][0] == 0) {
                 for (j in q.indices) {
                     q[j][0] = n[j + 1][0]
@@ -80,16 +189,30 @@ class QREncoder {
                 }
             }
             else {
-                throw Exception("Something got wrong with stupid calculations")
+                throw Exception("Something got wrong with stupid calculations at index $i")
             }
-            Log.d("QR debug log", "7")
             if (i == messagePolynomial.size) {
                 for (j in q.indices) {
                     errorCorrectionCodeWords[j] = q[j][0]
                 }
             }
-            Log.d("QR codewords", errorCorrectionCodeWords.contentToString())
         }
+        var errorCorrectionCodeWordsBits = ""
+        for (errorCorrectionCodeWord in errorCorrectionCodeWords) {
+            errorCorrectionCodeWordsBits += errorCorrectionCodeWord.toString(2).padStart(8, '0')
+        }
+        return errorCorrectionCodeWordsBits
+    }
+
+    private fun clone(array: Array<IntArray>): Array<IntArray> {
+        val clone = arrayOfNulls<IntArray>(array.size)
+        for (i in array.indices) {
+            clone[i] = array[i].copyOf(array[i].size)
+        }
+        val nonNullArray: Array<IntArray> = clone
+            ?.filterNotNull()
+            ?.toTypedArray() ?: emptyArray()
+        return nonNullArray
     }
 
     private fun log(exponent: Int): Int { // van a^n -> cijfer
@@ -127,11 +250,10 @@ class QREncoder {
                                        numberOfErrorCorrectionCodeWords: Int, // n waarvan je polynomial wilt hebben
     ): Array<IntArray> {
         // multiply each term by (x^1 - α^n)
-        val n = previous_n + 1
+        val n = previous_n
         val newPolynomial = Array(previousPolynomial.size * 2){IntArray(2) {0}}
         val multiplyPolynomial = arrayOf(intArrayOf(0, 1), //(x^1 - α^n)
-            intArrayOf(n, 0))
-        Log.d("QR debug log gp", "1")
+            intArrayOf(n + 1, 0))
         var index = 0
         for (term in previousPolynomial.indices) { // voor elke term (bijv. -α^2x^3)
             for (t in 0..1) { // voor elke term in (x^1 - α^n)
@@ -140,30 +262,28 @@ class QREncoder {
                 index += 1
             }
         }
-        Log.d("QR debug log gp", "2")
-        val defPolynomial = Array(n + 2){IntArray(2) {0}}
-        for (powerOfX in 0..(n + 1)) {
+        val defPolynomial = Array(n + 3){IntArray(2) {0}}
+        for (powerOfX in 0..(n + 2)) {
             defPolynomial[powerOfX][1] = powerOfX
             var firstTerm = true
             for (polynomial in newPolynomial) {
                 if (polynomial[1] == powerOfX) {
                     if (firstTerm) {
-                        defPolynomial[powerOfX][0] = 2.0.pow(polynomial[0]).toInt()
+                        defPolynomial[powerOfX][0] = log(polynomial[0])
                         firstTerm = false
                     }
                     else {
-                        defPolynomial[powerOfX][0] = xorInt(2.0.pow(polynomial[0].toDouble()).toInt(), defPolynomial[powerOfX][0])
+                        defPolynomial[powerOfX][0] = xorInt(log(polynomial[0]), defPolynomial[powerOfX][0])
                     }
                 }
             }
         }
-        Log.d("QR debug log gp", "3")
         for (polynomial in defPolynomial) {
             polynomial[0] = antiLog(polynomial[0])
         }
         var pol = defPolynomial
-        if (numberOfErrorCorrectionCodeWords <= n + 2) {
-            pol = getGeneratorPolynomial(pol, n, numberOfErrorCorrectionCodeWords)
+        if (n + 3 <= numberOfErrorCorrectionCodeWords) {
+            pol = getGeneratorPolynomial(pol, n + 1, numberOfErrorCorrectionCodeWords)
         }
         return pol
     }
@@ -175,7 +295,7 @@ class QREncoder {
         num2Binary = num2Binary.padStart(max(num1Binary.length, num2Binary.length), '0')
         var resultBinary = ""
         for (bit in num1Binary.indices) {
-            resultBinary += (num1Binary[bit].code - '0'.code) xor (num2Binary[bit].code - '0'.code)
+            resultBinary += num1Binary[bit].code xor num2Binary[bit].code
         }
         val resultDecimal = resultBinary.toInt(2)
         return resultDecimal
@@ -218,8 +338,8 @@ class QREncoder {
         return errorCorrectionLevel
     }
 
-    fun getCharCountIndicator(encodingType: String,
-                              qrData: String,
+    private fun getCharCountIndicator(encodingType: String,
+                                      qrData: String,
     ): String {
         var indicator = ""
         when(encodingType) {
@@ -247,7 +367,7 @@ class QREncoder {
         run breaking@ {
             types.forEach { entry ->
                 if (entry.value) {
-                    encodingType = entry.key
+                    encodingType = (entry.key)
                     return@breaking
                 }
             }

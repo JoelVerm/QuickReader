@@ -39,7 +39,7 @@ class GenerateResult : AppCompatActivity() {
         val imageView = findViewById<ImageView>(R.id.resultImage)
         val size = Resources.getSystem().getDisplayMetrics().widthPixels
         Log.d("QR width", size.toString())
-        bitmap = bitmap.scale(size, size)
+        bitmap = bitmap.scale(size, size, false)
         imageView.setImageBitmap(bitmap)
 
         val savebutton = findViewById<Button>(R.id.savebutton)
