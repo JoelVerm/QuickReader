@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
+import kotlin.math.ceil
 import kotlin.math.max
 
 infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
@@ -70,8 +71,26 @@ class ImageBitReader(private val image: ImageProxy) {
         val cropImage = {
             image: Array<IntArray> ->
 
-            val topY = (image.size * 0.1).toInt()
-            val bottomY = (image.size * 0.9).toInt()
+            var topY = 0
+            var topYSet = false
+            var bottomY = 0
+            var bottomYSet = false
+            val firstX = image.size / 2
+            for (y in image.indices) {
+                val by = image.size - 1 - y
+                if (image[y][firstX] == 1 && !topYSet) {
+                    topY = y
+                    topYSet = true
+                }
+                if (image[by][firstX] == 1 && !bottomYSet) {
+                    bottomY = by
+                    bottomYSet = true
+                }
+                if (topYSet && bottomYSet)
+                    break
+            }
+            topY += 10
+            bottomY -= 10
 
             var topX = 0
             var topXSet = false
@@ -93,9 +112,12 @@ class ImageBitReader(private val image: ImageProxy) {
             val increaseX = (bottomX - topX) / 0.8
             val startX = topX - 0.1 * increaseX
             for (y in image.indices) {
-                val x = max((startX + increaseX * (y.toFloat()/imageHeight)).toInt(), 0)
+                val x = max((ceil(startX + increaseX * (y.toFloat()/imageHeight))).toInt(), 0)
                 image[y] = image[y].drop(x).padEnd(image[y].size).toIntArray()
             }
+
+            val tempImg = ImageBitWriter().write(image)
+
             image
         }
 
@@ -176,6 +198,10 @@ class ImageBitReader(private val image: ImageProxy) {
                 qrcodeArray[y][x] = if (average > 0.5) 1 else 0
             }
         }
+
+        val tempImg = ImageBitWriter().write(qrcodeArray)
+        for (row in qrcodeArray)
+            Log.d("QR array", row.contentToString())
 
         return qrcodeArray
     }

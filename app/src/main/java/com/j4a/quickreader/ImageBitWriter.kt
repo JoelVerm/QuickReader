@@ -18,7 +18,7 @@ class ImageBitWriter() {
         return bitmap
     }
     private fun createBitmap(bitArray: Array<IntArray>): Bitmap {
-        val QRCode = Bitmap.createBitmap(21, 21, Bitmap.Config.ARGB_8888)
+        val QRCode = Bitmap.createBitmap(bitArray[0].size, bitArray.size, Bitmap.Config.ARGB_8888)
         for ((y, row) in bitArray.enumerate()) {
             for ((x, value) in row.enumerate()) {
                 if (value == 1){
