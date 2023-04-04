@@ -9,9 +9,9 @@ class QRDecoder(private var qrData: Array<IntArray>) {
             throw Exception("Error occured while trying to apply maskpattern")
         }
         val bits = readBits()
-        val length: Int = getLength(bits)
-        val errorCorrectionLevel: String = getErrorCorrectionLevel().toString()
         val modeIndicator: String = getModeIndicator()
+        val length: Int = getLength(bits, modeIndicator)
+        val errorCorrectionLevel: String = getErrorCorrectionLevel().toString()
         for (c in 1..length) {
             contents += sliceByte(c, modeIndicator, bits)
         }
@@ -59,10 +59,12 @@ class QRDecoder(private var qrData: Array<IntArray>) {
                           modeIndicator: String = "byte",
                           bitData: MutableList<Int>
     ): String {
-        val byteLengths = mapOf("numeric" to 10, "alphanumeric" to 11, "byte" to 8, "kanji" to 13, "decimal" to 8)
-        val byteLength: Int = byteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
-        val lengthByteLengths = mapOf("numeric" to 10, "alphanumeric" to 9, "byte" to 8, "kanji" to 8, "decimal" to 8)
+        val byteLengths = mapOf("numeric" to 10, "alphanumeric" to 11, "byte" to 8, "kanji" to 13)
+        var byteLength: Int = byteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
+        val lengthByteLengths = mapOf("numeric" to 10, "alphanumeric" to 9, "byte" to 8, "kanji" to 8)
         val lengthByteLength: Int = lengthByteLengths[modeIndicator] ?: throw Exception("Invalid mode indicator, please try to scan again")
+        if (byte == 0)
+            byteLength = lengthByteLength
         val sliceStart: Int = 4 + lengthByteLength + (byte - 1) * byteLength
         var returnData = ""
         var index = 0
@@ -71,10 +73,9 @@ class QRDecoder(private var qrData: Array<IntArray>) {
             byteNumber += bit * 2.0.pow(index.toDouble())
             index += 1
         }
+        if (byte == 0)
+            return byteNumber.toString()
         when(modeIndicator) {
-            "decimal" -> {
-                returnData = byteNumber.toString()
-            }
             "numeric" -> {
                 returnData = byteNumber.toString()
             }
@@ -92,8 +93,8 @@ class QRDecoder(private var qrData: Array<IntArray>) {
     }
 
 
-    private fun getLength(bitData: MutableList<Int>): Int {
-        val length: String = sliceByte(0, "decimal", bitData)
+    private fun getLength(bitData: MutableList<Int>, modeIndicator: String): Int {
+        val length: String = sliceByte(0, modeIndicator, bitData)
         return length.toDouble().toInt()
     }
 

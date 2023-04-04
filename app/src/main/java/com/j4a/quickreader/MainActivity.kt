@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
             takePhoto {
                 try {
                     val imageToScreenCropRect = imageToScreenCropRect ?: return@takePhoto
-                    val qr = ImageBitReader(it).read(imageToScreenCropRect)
+                    val qr = ImageBitReader(it, this).read(imageToScreenCropRect)
                     it.close()
                     val decoder = QRDecoder(qr)
                     val text = decoder.readQR()
@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 } catch (e:Exception) {
                     Toast.makeText(this, "Cannot read the QR, please try again", Toast.LENGTH_LONG).show()
-                    Log.e("QR error", e.toString())
+                    Log.e("QR error", e.stackTraceToString())
                 }
             }
         }

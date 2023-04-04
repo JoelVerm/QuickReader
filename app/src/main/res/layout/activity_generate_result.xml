@@ -7,13 +7,13 @@
     tools:context=".GenerateResult">
 
     <Button
-        android:id="@+id/screenshotbutton"
+        android:id="@+id/savebutton"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginBottom="30dp"
         android:background="@drawable/roundedbutton"
         android:backgroundTint="@color/black"
-        android:drawableLeft="@drawable/screenshotbutton"
+        android:drawableLeft="@drawable/savebutton"
         android:drawableTint="@color/white"
         android:insetTop="0dp"
         android:insetBottom="0dp"
@@ -21,7 +21,7 @@
         android:paddingTop="8dp"
         android:paddingRight="8dp"
         android:paddingBottom="5dp"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -48,9 +48,10 @@
         app:layout_constraintStart_toStartOf="parent"/>
 
     <ImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/resultImage"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
