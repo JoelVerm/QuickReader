@@ -63,7 +63,7 @@ class QREncoder {
         }
         val totalQrData = qrBits + errorCorrectionCodeWords
         var index = 0
-        for (doubleColumn in 20 downTo 2 step 2) { // gaat kolommen af
+        for (doubleColumn in 20 downTo 8 step 2) { // gaat kolommen af
             if ((doubleColumn / 2) % 2 == 0) { // omhoog
                 for (row in 20 downTo 1) { //gaat rijen in kolom af
                     for (column in doubleColumn downTo (doubleColumn - 1)) {
@@ -81,6 +81,24 @@ class QREncoder {
                             qrMatrix[row][column] = totalQrData[index].code - '0'.code
                             index += 1
                         }
+                    }
+                }
+            }
+        }
+        for (doubleColumn in 5 downTo 1 step 2) {
+            if (((doubleColumn - 1) / 2) % 2 == 0) { // down
+                for (row in 9..12) {
+                    for (column in doubleColumn downTo (doubleColumn - 1)) {
+                        qrMatrix[row][column] = totalQrData[index].code - '0'.code
+                        index += 1
+                    }
+                }
+            }
+            else {
+                for (row in 12 downTo 9) {
+                    for (column in doubleColumn downTo (doubleColumn - 1)) {
+                        qrMatrix[row][column] = totalQrData[index].code - '0'.code
+                        index += 1
                     }
                 }
             }
